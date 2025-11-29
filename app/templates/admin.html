@@ -1,0 +1,3464 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FIMonacci - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --sidebar-bg: #1e293b;
+            --sidebar-hover: #334155;
+            --sidebar-active: #3b82f6;
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --info: #06b6d4;
+        }
+        [data-theme="dark"] {
+            --sidebar-bg: #0f172a;
+            --sidebar-hover: #1e293b;
+            --sidebar-active: #3b82f6;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --accent: #60a5fa;
+            --success: #34d399;
+            --warning: #fbbf24;
+            --error: #f87171;
+            --info: #22d3ee;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            display: flex;
+            min-height: 100vh;
+        }
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--sidebar-bg);
+            color: #ffffff;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .sidebar-logo-icon {
+            width: 40px;
+            height: 40px;
+            background: #ffffff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+            /* Vintage portrait effect */
+            background-image: 
+                /* Face shape */
+                radial-gradient(ellipse 55% 75% at 50% 55%, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,0.15) 50%, transparent 70%),
+                /* Cap/head covering */
+                radial-gradient(ellipse 50% 25% at 50% 15%, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 40%, transparent 70%),
+                /* General shading */
+                linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.25) 25%, rgba(0,0,0,0.3) 35%, rgba(0,0,0,0.3) 45%, rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.15) 100%),
+                linear-gradient(to right, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.15) 100%);
+        }
+        .sidebar-logo-icon::before {
+            content: '';
+            position: absolute;
+            top: 28%;
+            left: 0;
+            width: 100%;
+            height: 28%;
+            background: #ef4444;
+            z-index: 1;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .sidebar-logo-icon::after {
+            content: '870f3924a3ff4f982161384adfa54ff645f10e\A 37c0505dc23c2c395c9868c084';
+            position: absolute;
+            top: 30%;
+            left: 3px;
+            width: calc(100% - 6px);
+            height: 24%;
+            font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
+            font-size: 2.8px;
+            line-height: 3.8px;
+            color: #ffffff;
+            white-space: pre;
+            z-index: 2;
+            text-align: left;
+            letter-spacing: 0.15px;
+            font-weight: 400;
+            overflow: hidden;
+            text-shadow: 0 0 1px rgba(0,0,0,0.3);
+        }
+        .sidebar-version {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            margin-left: 8px;
+        }
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 4px;
+            transition: all 0.2s;
+        }
+        .sidebar-toggle:hover {
+            color: #ffffff;
+            transform: scale(1.1);
+        }
+        .sidebar-nav {
+            padding: 16px 0;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+        .nav-item:hover {
+            background: var(--sidebar-hover);
+            color: #ffffff;
+        }
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.2), transparent);
+            color: #ffffff;
+            border-left-color: var(--sidebar-active);
+        }
+        .nav-icon {
+            width: 20px;
+            text-align: center;
+            font-size: 16px;
+            color: rgba(255,255,255,0.7);
+        }
+        .nav-item.active .nav-icon {
+            color: #ffffff;
+        }
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            transition: margin-left 0.3s ease;
+        }
+        .main-content.expanded {
+            margin-left: 0;
+        }
+        /* Top Header */
+        .top-header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 20px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        .sidebar-toggle-header {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 18px;
+            color: var(--text-primary);
+            margin-right: 16px;
+        }
+        .sidebar-toggle-header:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        .header-left h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .header-left p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .search-bar {
+            position: relative;
+            width: 300px;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .action-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+            color: var(--text-primary);
+            position: relative;
+        }
+        .action-icon:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+        /* Content Area */
+        .content-area {
+            padding: 32px;
+        }
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+        .summary-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 
+                0 2px 4px -1px rgba(0, 0, 0, 0.06),
+                0 1px 2px -1px rgba(0, 0, 0, 0.03);
+        }
+        .summary-card:hover {
+            box-shadow: 
+                0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-4px);
+        }
+        [data-theme="dark"] .summary-card {
+            box-shadow: 
+                0 2px 4px -1px rgba(0, 0, 0, 0.3),
+                0 1px 2px -1px rgba(0, 0, 0, 0.2);
+        }
+        [data-theme="dark"] .summary-card:hover {
+            box-shadow: 
+                0 10px 15px -3px rgba(0, 0, 0, 0.4),
+                0 4px 6px -2px rgba(0, 0, 0, 0.3);
+        }
+        .summary-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .summary-dot.blue { background: var(--accent); }
+        .summary-dot.red { background: var(--error); }
+        .summary-dot.green { background: var(--success); }
+        .summary-dot.orange { background: var(--warning); }
+        .summary-content h3 {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .summary-content p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        /* Panel Cards */
+        .panel-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 
+                0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06),
+                0 0 0 1px rgba(0, 0, 0, 0.05);
+            transition: box-shadow 0.3s ease;
+        }
+        .panel-card:hover {
+            box-shadow: 
+                0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                0 4px 6px -2px rgba(0, 0, 0, 0.05),
+                0 0 0 1px rgba(0, 0, 0, 0.05);
+        }
+        [data-theme="dark"] .panel-card {
+            box-shadow: 
+                0 4px 6px -1px rgba(0, 0, 0, 0.3),
+                0 2px 4px -1px rgba(0, 0, 0, 0.2),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+        [data-theme="dark"] .panel-card:hover {
+            box-shadow: 
+                0 10px 15px -3px rgba(0, 0, 0, 0.4),
+                0 4px 6px -2px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .panel-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .panel-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: var(--accent);
+        }
+        /* Neon effects for Agent Status page */
+        #agent-status-page .panel-card {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid transparent;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(16, 185, 129, 0.05));
+        }
+        [data-theme="dark"] #agent-status-page .panel-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2),
+                        0 0 40px rgba(16, 185, 129, 0.1),
+                        inset 0 0 20px rgba(59, 130, 246, 0.05);
+        }
+        [data-theme="dark"] #agent-status-page .panel-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, 
+                #3b82f6, #10b981, #8b5cf6, #ec4899, #3b82f6);
+            background-size: 400% 400%;
+            border-radius: 16px;
+            z-index: -1;
+            opacity: 0.5;
+            animation: neonBorder 3s ease infinite;
+        }
+        @keyframes neonBorder {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        [data-theme="dark"] #agent-status-page .panel-card:hover {
+            border-color: rgba(59, 130, 246, 0.6);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.4),
+                        0 0 60px rgba(16, 185, 129, 0.3),
+                        inset 0 0 30px rgba(59, 130, 246, 0.1);
+            transform: translateY(-4px) scale(1.01);
+        }
+        #agent-status-page .panel-title {
+            background: linear-gradient(135deg, #3b82f6, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+        [data-theme="dark"] #agent-status-page .panel-title {
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.8),
+                         0 0 20px rgba(16, 185, 129, 0.6);
+        }
+        #agent-status-page .panel-icon {
+            background: linear-gradient(135deg, #3b82f6, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+            animation: iconPulse 2s ease-in-out infinite;
+        }
+        @keyframes iconPulse {
+            0%, 100% { 
+                filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+                transform: scale(1);
+            }
+            50% { 
+                filter: drop-shadow(0 0 15px rgba(59, 130, 246, 1));
+                transform: scale(1.1);
+            }
+        }
+        @keyframes neonPulse {
+            0%, 100% { 
+                box-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 20px currentColor, 0 0 30px currentColor, 0 0 40px currentColor;
+                transform: scale(1.1);
+            }
+        }
+        #agent-status-page canvas {
+            filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));
+        }
+        .neon-legend-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            padding-left: 8px;
+            padding-right: 8px;
+            border-radius: 8px;
+        }
+        .neon-legend-dot {
+            animation: neonPulse 2s ease-in-out infinite;
+        }
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 
+                0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06),
+                0 0 0 1px rgba(0, 0, 0, 0.05);
+        }
+        [data-theme="dark"] .data-table {
+            box-shadow: 
+                0 4px 6px -1px rgba(0, 0, 0, 0.3),
+                0 2px 4px -1px rgba(0, 0, 0, 0.2),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+        .data-table thead {
+            background: linear-gradient(to bottom, var(--bg-primary), var(--bg-secondary));
+        }
+        .data-table th {
+            text-align: left;
+            padding: 16px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border-color);
+            background: var(--bg-primary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .data-table th:first-child {
+            border-top-left-radius: 12px;
+        }
+        .data-table th:last-child {
+            border-top-right-radius: 12px;
+        }
+        .data-table tbody {
+            background: var(--bg-secondary);
+        }
+        .data-table td {
+            padding: 16px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+        .data-table tbody tr {
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        .data-table tbody tr:hover {
+            background: var(--bg-primary);
+            border-left-color: var(--accent);
+            transform: translateX(2px);
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.1),
+                0 2px 6px rgba(0, 0, 0, 0.08),
+                inset 0 0 0 1px rgba(59, 130, 246, 0.1);
+        }
+        [data-theme="dark"] .data-table tbody tr:hover {
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.4),
+                0 2px 6px rgba(0, 0, 0, 0.3),
+                inset 0 0 0 1px rgba(96, 165, 250, 0.2);
+        }
+        .data-table tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 12px;
+        }
+        .data-table tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 12px;
+        }
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .event-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .event-badge.modify { background: rgba(59, 130, 246, 0.1); color: var(--accent); }
+        .event-badge.create { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .event-badge.delete { background: rgba(239, 68, 68, 0.1); color: var(--error); }
+        .severity-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .severity-badge.high { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .severity-badge.critical { background: rgba(239, 68, 68, 0.1); color: var(--error); }
+        .severity-badge.medium { background: rgba(251, 191, 36, 0.1); color: #fbbf24; }
+        .severity-badge.low { background: rgba(59, 130, 246, 0.1); color: var(--accent); }
+        /* Timeline */
+        .timeline-item {
+            display: flex;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .timeline-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        #timeline-page-content .timeline-item {
+            padding: 10px 0;
+        }
+        #timeline-page-content .timeline-item:last-child {
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+        .timeline-time {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            min-width: 60px;
+        }
+        .timeline-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        #timeline-page-content .timeline-content {
+            min-height: auto;
+        }
+        .timeline-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .timeline-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        #timeline-page-content .timeline-desc {
+            margin-bottom: 6px;
+        }
+        #timeline-page-content .timeline-tag {
+            margin-bottom: 0;
+            margin-top: 0;
+        }
+        #timeline-page-content .timeline-content {
+            min-height: auto;
+            padding-bottom: 0;
+        }
+        .timeline-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 0;
+        }
+        .timeline-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .action-btn {
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        .action-btn:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        /* Glass effect for tables */
+        .users-table, .data-table {
+            position: relative;
+        }
+        .users-table::before, .data-table::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            z-index: -1;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        [data-theme="dark"] .users-table::before,
+        [data-theme="dark"] .data-table::before {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            overflow-y: auto;
+            backdrop-filter: blur(4px);
+        }
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        /* Profile Modal */
+        .profile-modal-content {
+            max-width: 500px;
+        }
+        .profile-header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+            margin: 0 auto 16px;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+        }
+        .profile-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        .profile-role {
+            display: inline-block;
+            padding: 4px 12px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .profile-info {
+            display: grid;
+            gap: 16px;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        .info-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .info-value {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .profile-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+        }
+        .profile-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .profile-btn:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .profile-btn.primary {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        .profile-btn.primary:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+        .profile-btn.danger {
+            background: var(--error);
+            color: white;
+            border-color: var(--error);
+        }
+        .profile-btn.danger:hover {
+            background: #dc2626;
+            border-color: #dc2626;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .modal-header h2 {
+            color: var(--text-primary);
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .close-btn {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-primary);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .close-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--error);
+            color: var(--error);
+            transform: rotate(90deg);
+        }
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .tab-btn {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover {
+            color: var(--accent);
+            background: var(--bg-primary);
+        }
+        .tab-btn.active {
+            color: var(--warning);
+            border-bottom-color: var(--warning);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .theme-toggle {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent);
+            transform: rotate(360deg) scale(1.15);
+        }
+        /* Settings Page Styles */
+        .settings-section {
+            margin-bottom: 32px;
+        }
+        .settings-section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .settings-section-title i {
+            color: var(--accent);
+        }
+        .settings-group {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+        .settings-label {
+            flex: 1;
+        }
+        .settings-label h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .settings-label p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .settings-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+            background: var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .switch.active {
+            background: var(--accent);
+        }
+        .switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .switch.active::after {
+            left: 26px;
+        }
+        .input-field {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            width: 200px;
+            transition: all 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .select-field {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            width: 200px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .select-field:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .save-btn {
+            padding: 10px 24px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .save-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        .save-btn:active {
+            transform: translateY(0);
+        }
+        .badge-info {
+            display: inline-block;
+            padding: 2px 8px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--accent);
+            margin-left: 8px;
+        }
+        .search-highlight {
+            background: rgba(251, 191, 36, 0.3);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-tertiary);
+            font-size: 14px;
+        }
+        .page-content {
+            display: none;
+        }
+        .page-content.active {
+            display: block;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-icon"></div>
+                <div>
+                    <div>FIMonacci</div>
+                    <span class="sidebar-version">v2.1.0</span>
+                </div>
+            </div>
+            <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-chevron-left"></i></button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" onclick="setActiveNav(this); showDashboard(); return false;">
+                <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" onclick="setActiveNav(this); showAlerts(); return false;">
+                <span class="nav-icon"><i class="fas fa-exclamation-triangle"></i></span>
+                <span>Alerts</span>
+            </a>
+            <a href="#" class="nav-item" onclick="setActiveNav(this); showTimeline(); return false;">
+                <span class="nav-icon"><i class="fas fa-clock"></i></span>
+                <span>Timeline</span>
+            </a>
+            <a href="#" class="nav-item" onclick="setActiveNav(this); showAgentStatus(); return false;">
+                <span class="nav-icon"><i class="fas fa-server"></i></span>
+                <span>Agent Status</span>
+            </a>
+            <a href="#" class="nav-item" onclick="setActiveNav(this); showSettings(); return false;">
+                <span class="nav-icon"><i class="fas fa-cog"></i></span>
+                <span>Settings</span>
+            </a>
+            <a href="#" class="nav-item" onclick="setActiveNav(this); showLogs(); return false;">
+                <span class="nav-icon"><i class="fas fa-file-alt"></i></span>
+                <span>Logs</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="system-status">
+                <div class="status-dot"></div>
+                <span>All Systems Operational</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Top Header -->
+        <div class="top-header">
+            <div class="header-left">
+                <button class="sidebar-toggle-header" onclick="toggleSidebar()" id="sidebarToggleBtn" style="display: none;"><i class="fas fa-bars"></i></button>
+                <div>
+                    <h1>Real-Time FIM Dashboard</h1>
+                    <p>Monitoring critical directories in real time</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="search-bar">
+                    <span class="search-icon"><i class="fas fa-search"></i></span>
+                    <input type="text" id="search-input" placeholder="Search alerts, files, events..." oninput="performSearch(this.value)" onkeyup="handleSearchKeyup(event)">
+                </div>
+                <div class="header-actions">
+                    <div class="action-icon" title="Download" onclick="downloadTableAsJSON()"><i class="fas fa-download"></i></div>
+                    <div class="action-icon" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <div class="notification-badge"></div>
+                    </div>
+                    <div class="action-icon" title="Profile" onclick="showProfile()"><i class="fas fa-user"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Dashboard Page -->
+            <div class="page-content active" id="dashboard-page">
+            <!-- Summary Cards -->
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-dot blue"></div>
+                    <div class="summary-content">
+                        <h3 id="total-modified">0</h3>
+                        <p>Modified</p>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-dot red"></div>
+                    <div class="summary-content">
+                        <h3 id="total-deleted">0</h3>
+                        <p>Deleted</p>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-dot green"></div>
+                    <div class="summary-content">
+                        <h3 id="total-created">0</h3>
+                        <p>Created</p>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-dot orange"></div>
+                    <div class="summary-content">
+                        <h3 id="total-accessed">0</h3>
+                        <p>Accessed</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Grid -->
+            <div class="main-grid">
+                <!-- Left: Real-Time Alerts -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">
+                                <span class="panel-icon"><i class="fas fa-exclamation-triangle"></i></span>
+                                Real-Time Alerts
+                            </div>
+                            <div class="panel-subtitle">Recent file integrity events</div>
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Agent</th>
+                                <th>File Name</th>
+                                <th>Event</th>
+                                <th>Hash Change</th>
+                                <th>Severity</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alerts-tbody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--text-tertiary); padding: 40px;">
+                                    Loading alerts...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Right: Activity Timeline -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">
+                                <span class="panel-icon"><i class="fas fa-clock"></i></span>
+                                Activity Timeline
+                            </div>
+                            <div class="panel-subtitle">Chronological events</div>
+                        </div>
+                    </div>
+                    <div id="timeline-content" style="max-height: 625px; overflow-y: auto;">
+                        <div style="text-align: center; color: var(--text-tertiary); padding: 40px;">
+                            Loading timeline...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clients Panel -->
+            <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">
+                                <span class="panel-icon"><i class="fas fa-desktop"></i></span>
+                                All Clients
+                            </div>
+                            <div class="panel-subtitle">Connected monitoring agents</div>
+                        </div>
+                    </div>
+                <table class="data-table users-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Client ID</th>
+                            <th>Hostname</th>
+                            <th>First Seen</th>
+                            <th>Last Seen</th>
+                            <th>Hashes</th>
+                            <th>Folders</th>
+                            <th>Alerts</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clients-tbody">
+                        <tr>
+                            <td colspan="9" style="text-align: center; color: var(--text-tertiary); padding: 40px;">
+                                Loading clients...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            </div>
+
+            <!-- Alerts Page -->
+            <div class="page-content" id="alerts-page">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">
+                                <span class="panel-icon"><i class="fas fa-exclamation-triangle"></i></span>
+                                All Alerts
+                            </div>
+                            <div class="panel-subtitle">Complete file integrity event history</div>
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <select id="alert-filter-type" class="select-field" style="width: 150px;" onchange="filterAlertsPage()">
+                                <option value="all">All Types</option>
+                                <option value="modified">Modified</option>
+                                <option value="created">Created</option>
+                                <option value="deleted">Deleted</option>
+                            </select>
+                            <select id="alert-filter-severity" class="select-field" style="width: 150px;" onchange="filterAlertsPage()">
+                                <option value="all">All Severities</option>
+                                <option value="critical">Critical</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Agent</th>
+                                <th>File Path</th>
+                                <th>Event Type</th>
+                                <th>Initial Hash</th>
+                                <th>Current Hash</th>
+                                <th>Severity</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alerts-page-tbody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--text-tertiary); padding: 40px;">
+                                    Loading alerts...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Timeline Page -->
+            <div class="page-content" id="timeline-page">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">
+                                <span class="panel-icon"><i class="fas fa-clock"></i></span>
+                                Activity Timeline
+                            </div>
+                            <div class="panel-subtitle">Chronological view of all file integrity events</div>
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <select id="timeline-filter-type" class="select-field" style="width: 150px;" onchange="filterTimelinePage()">
+                                <option value="all">All Events</option>
+                                <option value="modified">Modified</option>
+                                <option value="created">Created</option>
+                                <option value="deleted">Deleted</option>
+                            </select>
+                            <input type="number" id="timeline-limit" class="input-field" style="width: 100px;" value="50" min="10" max="500" step="10" onchange="filterTimelinePage()" placeholder="Limit">
+                        </div>
+                    </div>
+                    <div id="timeline-page-content" style="padding: 20px 20px 10px 20px;">
+                        <div style="text-align: center; color: var(--text-tertiary); padding: 40px;">
+                            Loading timeline...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agent Status Page -->
+            <div class="page-content" id="agent-status-page">
+                <div class="main-grid" style="grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <!-- System Activity Chart -->
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <div>
+                                <div class="panel-title">
+                                    <span class="panel-icon"><i class="fas fa-chart-line"></i></span>
+                                    System Activity
+                                </div>
+                                <div class="panel-subtitle">Events over time (24h)</div>
+                            </div>
+                        </div>
+                        <div style="padding: 20px; height: 300px; position: relative;">
+                            <canvas id="systemActivityChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Event Distribution Chart -->
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <div>
+                                <div class="panel-title">
+                                    <span class="panel-icon"><i class="fas fa-chart-pie"></i></span>
+                                    Event Distribution
+                                </div>
+                                <div class="panel-subtitle">By event type (24h)</div>
+                            </div>
+                        </div>
+                        <div style="padding: 20px; height: 300px; position: relative;">
+                            <canvas id="eventDistributionChart"></canvas>
+                        </div>
+                        <div id="event-distribution-legend" style="padding: 0 20px 20px 20px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs Page -->
+            <div class="page-content" id="logs-page">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">
+                                <span class="panel-icon"><i class="fas fa-file-alt"></i></span>
+                                System Logs
+                            </div>
+                            <div class="panel-subtitle">Real-time system and event logs</div>
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <select id="log-level-filter" class="select-field" style="width: 150px;" onchange="filterLogs()">
+                                <option value="all">All Levels</option>
+                                <option value="info">Info</option>
+                                <option value="warning">Warning</option>
+                                <option value="error">Error</option>
+                                <option value="success">Success</option>
+                            </select>
+                            <select id="log-type-filter" class="select-field" style="width: 150px;" onchange="filterLogs()">
+                                <option value="all">All Types</option>
+                                <option value="file_event">File Events</option>
+                                <option value="client">Client Activity</option>
+                                <option value="system">System</option>
+                            </select>
+                            <button class="action-btn" onclick="clearLogs()" style="padding: 8px 16px;">
+                                <i class="fas fa-trash"></i> Clear
+                            </button>
+                            <button class="action-btn" onclick="loadLogs()" style="padding: 8px 16px;">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div id="logs-container" style="background: var(--bg-primary); border-radius: 8px; padding: 16px; max-height: 600px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6;">
+                        <div style="text-align: center; color: var(--text-tertiary); padding: 40px;">
+                            Loading logs...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div class="page-content" id="settings-page">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">
+                                <span class="panel-icon">⚙️</span>
+                                System Settings
+                            </div>
+                            <div class="panel-subtitle">Configure FIMonacci monitoring and alert preferences</div>
+                        </div>
+                    </div>
+
+                    <!-- Monitoring Settings -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title"><i class="fas fa-chart-line"></i> Monitoring Settings</h3>
+                        
+                        <div class="settings-group">
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Active Scan Interval</h4>
+                                    <p>How often to scan monitored folders for changes</p>
+                                </div>
+                                <div class="settings-control">
+                                    <select class="select-field" id="scan-interval">
+                                        <option value="30">30 seconds</option>
+                                        <option value="60" selected>1 minute</option>
+                                        <option value="300">5 minutes</option>
+                                        <option value="600">10 minutes</option>
+                                        <option value="1800">30 minutes</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Hash Verification Interval</h4>
+                                    <p>How often to verify file hashes against database</p>
+                                </div>
+                                <div class="settings-control">
+                                    <select class="select-field" id="hash-verification-interval">
+                                        <option value="30">30 seconds</option>
+                                        <option value="60" selected>1 minute</option>
+                                        <option value="300">5 minutes</option>
+                                        <option value="600">10 minutes</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Hash Algorithm</h4>
+                                    <p>Algorithm used for file integrity checks</p>
+                                </div>
+                                <div class="settings-control">
+                                    <select class="select-field" id="hash-algorithm">
+                                        <option value="md5" selected>MD5 (Fast)</option>
+                                        <option value="sha1">SHA-1</option>
+                                        <option value="sha256">SHA-256 (Recommended)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Enable Real-time Monitoring</h4>
+                                    <p>Use watchdog for instant file change detection</p>
+                                </div>
+                                <div class="settings-control">
+                                    <div class="switch active" id="realtime-monitoring" onclick="toggleSwitch(this)"></div>
+                                    <span class="badge-info">Recommended</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alert Settings -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title"><i class="fas fa-exclamation-triangle"></i> Alert Settings</h3>
+                        
+                        <div class="settings-group">
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Enable Email Notifications</h4>
+                                    <p>Send email alerts for critical file changes</p>
+                                </div>
+                                <div class="settings-control">
+                                    <div class="switch" id="email-notifications" onclick="toggleSwitch(this)"></div>
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Email Address</h4>
+                                    <p>Email address for receiving alerts</p>
+                                </div>
+                                <div class="settings-control">
+                                    <input type="email" class="input-field" id="alert-email" placeholder="admin@example.com">
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Alert Severity Threshold</h4>
+                                    <p>Minimum severity level to trigger alerts</p>
+                                </div>
+                                <div class="settings-control">
+                                    <select class="select-field" id="alert-severity">
+                                        <option value="low">Low (All events)</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="high">High</option>
+                                        <option value="critical">Critical Only</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Alert Retention Days</h4>
+                                    <p>How long to keep alert history in database</p>
+                                </div>
+                                <div class="settings-control">
+                                    <input type="number" class="input-field" id="alert-retention" value="30" min="1" max="365">
+                                    <span style="color: var(--text-secondary);">days</span>
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Enable Sound Notifications</h4>
+                                    <p>Play sound when new alerts are detected</p>
+                                </div>
+                                <div class="settings-control">
+                                    <div class="switch" id="sound-notifications" onclick="toggleSwitch(this)"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Client Settings -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title"><i class="fas fa-desktop"></i> Client Settings</h3>
+                        
+                        <div class="settings-group">
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Auto-register New Clients</h4>
+                                    <p>Automatically register clients when they first connect</p>
+                                </div>
+                                <div class="settings-control">
+                                    <div class="switch active" id="auto-register" onclick="toggleSwitch(this)"></div>
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Client Timeout (minutes)</h4>
+                                    <p>Consider client offline after this many minutes of inactivity</p>
+                                </div>
+                                <div class="settings-control">
+                                    <input type="number" class="input-field" id="client-timeout" value="15" min="1" max="1440">
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Max Files Per Upload</h4>
+                                    <p>Maximum number of files a client can upload in one request</p>
+                                </div>
+                                <div class="settings-control">
+                                    <input type="number" class="input-field" id="max-files" value="1000" min="100" max="10000">
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Default Monitoring Paths</h4>
+                                    <p>Default folders to monitor for new clients</p>
+                                </div>
+                                <div class="settings-control">
+                                    <textarea class="input-field" id="default-paths" rows="3" placeholder="/home/user/documents&#10;/etc/config" style="width: 300px; resize: vertical;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Settings -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title"><i class="fas fa-tools"></i> System Settings</h3>
+                        
+                        <div class="settings-group">
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Database Backup Interval</h4>
+                                    <p>How often to create database backups</p>
+                                </div>
+                                <div class="settings-control">
+                                    <select class="select-field" id="backup-interval">
+                                        <option value="daily" selected>Daily</option>
+                                        <option value="weekly">Weekly</option>
+                                        <option value="monthly">Monthly</option>
+                                        <option value="never">Never</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Log Level</h4>
+                                    <p>Minimum log level to record</p>
+                                </div>
+                                <div class="settings-control">
+                                    <select class="select-field" id="log-level">
+                                        <option value="debug">Debug</option>
+                                        <option value="info" selected>Info</option>
+                                        <option value="warning">Warning</option>
+                                        <option value="error">Error</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Max Log File Size (MB)</h4>
+                                    <p>Maximum size of log files before rotation</p>
+                                </div>
+                                <div class="settings-control">
+                                    <input type="number" class="input-field" id="max-log-size" value="100" min="10" max="1000">
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Enable Performance Monitoring</h4>
+                                    <p>Track system performance metrics</p>
+                                </div>
+                                <div class="settings-control">
+                                    <div class="switch active" id="performance-monitoring" onclick="toggleSwitch(this)"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security Settings -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title"><i class="fas fa-lock"></i> Security Settings</h3>
+                        
+                        <div class="settings-group">
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Session Timeout (minutes)</h4>
+                                    <p>Automatic logout after inactivity</p>
+                                </div>
+                                <div class="settings-control">
+                                    <input type="number" class="input-field" id="session-timeout" value="60" min="5" max="480">
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Require Strong Passwords</h4>
+                                    <p>Enforce password complexity requirements</p>
+                                </div>
+                                <div class="settings-control">
+                                    <div class="switch active" id="strong-passwords" onclick="toggleSwitch(this)"></div>
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>Enable Two-Factor Authentication</h4>
+                                    <p>Require 2FA for admin accounts</p>
+                                </div>
+                                <div class="settings-control">
+                                    <div class="switch" id="two-factor" onclick="toggleSwitch(this)"></div>
+                                    <span class="badge-info">Coming Soon</span>
+                                </div>
+                            </div>
+
+                            <div class="settings-item">
+                                <div class="settings-label">
+                                    <h4>API Rate Limit (requests/min)</h4>
+                                    <p>Maximum API requests per minute per client</p>
+                                </div>
+                                <div class="settings-control">
+                                    <input type="number" class="input-field" id="api-rate-limit" value="100" min="10" max="1000">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Save Button -->
+                    <div style="text-align: right; margin-top: 32px;">
+                        <button class="save-btn" onclick="saveSettings()"><i class="fas fa-save"></i> Save All Settings</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal" id="profile-modal">
+        <div class="modal-content profile-modal-content">
+            <div class="modal-header">
+                <h2>User Profile</h2>
+                <button class="close-btn" onclick="closeProfileModal()">×</button>
+            </div>
+            <div class="profile-header">
+                <div class="profile-avatar"><i class="fas fa-user"></i></div>
+                <div class="profile-name">{{ current_user.username }}</div>
+                <div class="profile-role">Administrator</div>
+            </div>
+            <div class="profile-info">
+                <div class="info-item">
+                    <span class="info-label">Username</span>
+                    <span class="info-value">{{ current_user.username }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Email</span>
+                    <span class="info-value">{{ current_user.email or 'N/A' }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Role</span>
+                    <span class="info-value">Administrator</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Status</span>
+                    <span class="info-value" style="color: var(--success);">● Active</span>
+                </div>
+            </div>
+            <div class="profile-actions">
+                <button class="profile-btn" onclick="toggleTheme(); closeProfileModal();"><i class="fas fa-moon"></i> Theme </button>
+                <button class="profile-btn primary" onclick="navigateToDashboard()"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+                <button class="profile-btn danger" onclick="navigateToLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Details Modal -->
+    <div class="modal" id="client-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Client Details</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('hashes', event)">Hashes</button>
+                <button class="tab-btn" onclick="switchTab('folders', event)">Folders</button>
+                <button class="tab-btn" onclick="switchTab('alerts', event)">Alerts</button>
+                <button class="tab-btn" onclick="switchTab('stats', event)">Statistics</button>
+            </div>
+            <div id="hashes-tab" class="tab-content active">
+                <div id="hashes-content">Loading...</div>
+            </div>
+            <div id="folders-tab" class="tab-content">
+                <div id="folders-content">Loading...</div>
+            </div>
+            <div id="alerts-tab" class="tab-content">
+                <div id="alerts-content">Loading...</div>
+            </div>
+            <div id="stats-tab" class="tab-content">
+                <div id="stats-content">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentClientId = null;
+        let currentTab = 'hashes';
+        let sidebarCollapsed = false;
+
+        // Theme management
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeToggle(savedTheme);
+            loadSettings();
+            loadClients();
+            loadAlerts();
+            setInterval(loadAlerts, 5000); // Refresh alerts every 5 seconds
+            setInterval(loadClients, 10000); // Refresh clients every 10 seconds
+        });
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeToggle(newTheme);
+        }
+
+        function updateThemeToggle(theme) {
+            const toggle = document.getElementById('theme-toggle');
+            if (toggle) {
+                toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+            }
+        }
+
+        function toggleSidebar() {
+            sidebarCollapsed = !sidebarCollapsed;
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const toggleBtn = document.getElementById('sidebarToggleBtn');
+            
+            if (sidebarCollapsed) {
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('expanded');
+                if (toggleBtn) toggleBtn.style.display = 'flex';
+            } else {
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('expanded');
+                if (toggleBtn) toggleBtn.style.display = 'none';
+            }
+        }
+
+        function setActiveNav(element) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        function showSettings() {
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(page => page.classList.remove('active'));
+            // Show settings page
+            document.getElementById('settings-page').classList.add('active');
+            // Clear logs refresh interval if it exists
+            if (logsRefreshInterval) {
+                clearInterval(logsRefreshInterval);
+                logsRefreshInterval = null;
+            }
+        }
+
+        function showLogs() {
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(page => page.classList.remove('active'));
+            // Show logs page
+            document.getElementById('logs-page').classList.add('active');
+            // Load logs
+            loadLogs();
+            // Auto-refresh logs every 5 seconds
+            if (logsRefreshInterval) {
+                clearInterval(logsRefreshInterval);
+            }
+            logsRefreshInterval = setInterval(loadLogs, 5000);
+        }
+
+        let logsRefreshInterval = null;
+        let allLogs = [];
+
+        function loadLogs() {
+            fetch('/admin/api/logs')
+                .then(res => res.json())
+                .then(logs => {
+                    allLogs = logs;
+                    filterLogs();
+                })
+                .catch(err => {
+                    console.error('Error loading logs:', err);
+                    document.getElementById('logs-container').innerHTML = 
+                        '<div style="text-align: center; color: var(--error); padding: 40px;">Error loading logs</div>';
+                });
+        }
+
+        function filterLogs() {
+            const levelFilter = document.getElementById('log-level-filter')?.value || 'all';
+            const typeFilter = document.getElementById('log-type-filter')?.value || 'all';
+            
+            let filtered = allLogs;
+            
+            if (levelFilter !== 'all') {
+                filtered = filtered.filter(log => log.level === levelFilter);
+            }
+            
+            if (typeFilter !== 'all') {
+                filtered = filtered.filter(log => log.type === typeFilter);
+            }
+            
+            renderLogs(filtered);
+        }
+
+        function renderLogs(logs) {
+            const container = document.getElementById('logs-container');
+            if (!container) return;
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: var(--text-tertiary); padding: 40px;">No logs found</div>';
+                return;
+            }
+            
+            // Sort by timestamp (newest first)
+            logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            container.innerHTML = logs.map(log => {
+                const timestamp = new Date(log.timestamp);
+                const timeStr = timestamp.toLocaleString('en-US', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                });
+                
+                let levelColor = 'var(--text-secondary)';
+                let levelIcon = '●';
+                
+                switch(log.level) {
+                    case 'error':
+                        levelColor = 'var(--error)';
+                        levelIcon = '✕';
+                        break;
+                    case 'warning':
+                        levelColor = 'var(--warning)';
+                        levelIcon = '⚠';
+                        break;
+                    case 'success':
+                        levelColor = 'var(--success)';
+                        levelIcon = '✓';
+                        break;
+                    case 'info':
+                        levelColor = 'var(--accent)';
+                        levelIcon = 'ℹ';
+                        break;
+                }
+                
+                return `
+                    <div style="padding: 8px 0; border-bottom: 1px solid var(--border-color); display: flex; gap: 12px; align-items: flex-start;">
+                        <span style="color: ${levelColor}; font-weight: bold; min-width: 20px;">${levelIcon}</span>
+                        <span style="color: var(--text-tertiary); min-width: 180px; font-size: 12px;">${timeStr}</span>
+                        <span style="color: var(--text-secondary); min-width: 80px; font-size: 11px; text-transform: uppercase;">[${log.type}]</span>
+                        <span style="color: var(--text-primary); flex: 1;">${escapeHtml(log.message)}</span>
+                    </div>
+                `;
+            }).join('');
+            
+            // Auto-scroll to top (newest logs)
+            container.scrollTop = 0;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function clearLogs() {
+            if (confirm('Are you sure you want to clear old logs (older than 7 days)? This action cannot be undone.')) {
+                fetch('/admin/api/logs/clear', { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            loadLogs();
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error clearing logs:', err);
+                    });
+            }
+        }
+
+        function showDashboard() {
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(page => page.classList.remove('active'));
+            // Show dashboard page
+            document.getElementById('dashboard-page').classList.add('active');
+            // Clear chart refresh interval if it exists
+            if (chartRefreshInterval) {
+                clearInterval(chartRefreshInterval);
+                chartRefreshInterval = null;
+            }
+            // Update header title
+            document.querySelector('.top-header h1').textContent = 'Real-Time FIM Dashboard';
+            document.querySelector('.top-header p').textContent = 'Monitoring critical directories in real time';
+        }
+
+        function toggleSwitch(element) {
+            element.classList.toggle('active');
+        }
+
+        function saveSettings() {
+            const settings = {
+                scanInterval: document.getElementById('scan-interval').value,
+                hashVerificationInterval: document.getElementById('hash-verification-interval').value,
+                hashAlgorithm: document.getElementById('hash-algorithm').value,
+                realtimeMonitoring: document.getElementById('realtime-monitoring').classList.contains('active'),
+                emailNotifications: document.getElementById('email-notifications').classList.contains('active'),
+                alertEmail: document.getElementById('alert-email').value,
+                alertSeverity: document.getElementById('alert-severity').value,
+                alertRetention: document.getElementById('alert-retention').value,
+                soundNotifications: document.getElementById('sound-notifications').classList.contains('active'),
+                autoRegister: document.getElementById('auto-register').classList.contains('active'),
+                clientTimeout: document.getElementById('client-timeout').value,
+                maxFiles: document.getElementById('max-files').value,
+                defaultPaths: document.getElementById('default-paths').value,
+                backupInterval: document.getElementById('backup-interval').value,
+                logLevel: document.getElementById('log-level').value,
+                maxLogSize: document.getElementById('max-log-size').value,
+                performanceMonitoring: document.getElementById('performance-monitoring').classList.contains('active'),
+                sessionTimeout: document.getElementById('session-timeout').value,
+                strongPasswords: document.getElementById('strong-passwords').classList.contains('active'),
+                twoFactor: document.getElementById('two-factor').classList.contains('active'),
+                apiRateLimit: document.getElementById('api-rate-limit').value
+            };
+
+            // Save to localStorage (in real app, this would be sent to server)
+            localStorage.setItem('fimonacci-settings', JSON.stringify(settings));
+            
+            // Show success message
+            alert('✅ Settings saved successfully!');
+            
+            // In production, send to server:
+            // fetch('/admin/api/settings', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify(settings)
+            // }).then(res => res.json()).then(data => {
+            //     alert('Settings saved!');
+            // });
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('fimonacci-settings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                // Load settings into form
+                if (settings.scanInterval) document.getElementById('scan-interval').value = settings.scanInterval;
+                if (settings.hashVerificationInterval) document.getElementById('hash-verification-interval').value = settings.hashVerificationInterval;
+                if (settings.hashAlgorithm) document.getElementById('hash-algorithm').value = settings.hashAlgorithm;
+                if (settings.realtimeMonitoring) document.getElementById('realtime-monitoring').classList.toggle('active', settings.realtimeMonitoring);
+                if (settings.emailNotifications) document.getElementById('email-notifications').classList.toggle('active', settings.emailNotifications);
+                if (settings.alertEmail) document.getElementById('alert-email').value = settings.alertEmail;
+                if (settings.alertSeverity) document.getElementById('alert-severity').value = settings.alertSeverity;
+                if (settings.alertRetention) document.getElementById('alert-retention').value = settings.alertRetention;
+                if (settings.soundNotifications) document.getElementById('sound-notifications').classList.toggle('active', settings.soundNotifications);
+                if (settings.autoRegister) document.getElementById('auto-register').classList.toggle('active', settings.autoRegister);
+                if (settings.clientTimeout) document.getElementById('client-timeout').value = settings.clientTimeout;
+                if (settings.maxFiles) document.getElementById('max-files').value = settings.maxFiles;
+                if (settings.defaultPaths) document.getElementById('default-paths').value = settings.defaultPaths;
+                if (settings.backupInterval) document.getElementById('backup-interval').value = settings.backupInterval;
+                if (settings.logLevel) document.getElementById('log-level').value = settings.logLevel;
+                if (settings.maxLogSize) document.getElementById('max-log-size').value = settings.maxLogSize;
+                if (settings.performanceMonitoring) document.getElementById('performance-monitoring').classList.toggle('active', settings.performanceMonitoring);
+                if (settings.sessionTimeout) document.getElementById('session-timeout').value = settings.sessionTimeout;
+                if (settings.strongPasswords) document.getElementById('strong-passwords').classList.toggle('active', settings.strongPasswords);
+                if (settings.twoFactor) document.getElementById('two-factor').classList.toggle('active', settings.twoFactor);
+                if (settings.apiRateLimit) document.getElementById('api-rate-limit').value = settings.apiRateLimit;
+            }
+        }
+
+        // Search functionality
+        let allAlerts = [];
+        let allClients = [];
+
+        function performSearch(query) {
+            const searchTerm = query.toLowerCase().trim();
+            
+            if (!searchTerm) {
+                // Reset to original data
+                if (allAlerts.length > 0) renderAlertsTable(allAlerts);
+                if (allClients.length > 0) renderClients(allClients);
+                return;
+            }
+
+            // Search in alerts
+            if (allAlerts.length > 0) {
+                const filteredAlerts = allAlerts.filter(alert => {
+                    const path = alert.path.toLowerCase();
+                    const fileName = path.split('/').pop() || path;
+                    const alertType = alert.alert_type.toLowerCase();
+                    const hash = (alert.initial_hash || '').toLowerCase() + (alert.current_hash || '').toLowerCase();
+                    const timestamp = new Date(alert.timestamp).toLocaleString('en-US').toLowerCase();
+                    
+                    return fileName.includes(searchTerm) || 
+                           path.includes(searchTerm) ||
+                           alertType.includes(searchTerm) ||
+                           hash.includes(searchTerm) ||
+                           timestamp.includes(searchTerm);
+                });
+                renderAlertsTable(filteredAlerts, searchTerm);
+            }
+
+            // Search in clients
+            if (allClients.length > 0) {
+                const filteredClients = allClients.filter(client => {
+                    const hostname = (client.hostname || '').toLowerCase();
+                    const clientId = (client.client_id || '').toLowerCase();
+                    const firstSeen = new Date(client.first_seen).toLocaleString('en-US').toLowerCase();
+                    const lastSeen = new Date(client.last_seen).toLocaleString('en-US').toLowerCase();
+                    
+                    return hostname.includes(searchTerm) ||
+                           clientId.includes(searchTerm) ||
+                           firstSeen.includes(searchTerm) ||
+                           lastSeen.includes(searchTerm) ||
+                           String(client.id).includes(searchTerm);
+                });
+                renderClients(filteredClients, searchTerm);
+            }
+        }
+
+        function handleSearchKeyup(event) {
+            if (event.key === 'Escape') {
+                document.getElementById('search-input').value = '';
+                performSearch('');
+            }
+        }
+
+        function highlightText(text, searchTerm) {
+            if (!searchTerm) return text;
+            const regex = new RegExp(`(${searchTerm})`, 'gi');
+            return text.replace(regex, '<span class="search-highlight">$1</span>');
+        }
+
+        function showAlerts() {
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(page => page.classList.remove('active'));
+            // Show alerts page
+            document.getElementById('alerts-page').classList.add('active');
+            // Load and render alerts
+            loadAlertsPage();
+            // Update header title
+            document.querySelector('.top-header h1').textContent = 'Alerts Dashboard';
+            document.querySelector('.top-header p').textContent = 'View and filter all file integrity alerts';
+        }
+
+        function showTimeline() {
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(page => page.classList.remove('active'));
+            // Show timeline page
+            document.getElementById('timeline-page').classList.add('active');
+            // Load and render timeline
+            loadTimelinePage();
+            // Update header title
+            document.querySelector('.top-header h1').textContent = 'Activity Timeline';
+            document.querySelector('.top-header p').textContent = 'Chronological view of file integrity events';
+        }
+
+        function loadAlertsPage() {
+            fetch('/api/alerts')
+                .then(res => res.json())
+                .then(alerts => {
+                    renderAlertsPage(alerts);
+                })
+                .catch(err => {
+                    console.error('Error loading alerts:', err);
+                });
+        }
+
+        function renderAlertsPage(alerts) {
+            const tbody = document.getElementById('alerts-page-tbody');
+            if (!tbody) return;
+
+            if (alerts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-tertiary); padding: 40px;">No alerts found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = alerts.map(alert => {
+                let time;
+                if (alert.timestamp) {
+                    const timestampStr = alert.timestamp;
+                    const normalizedTimestamp = timestampStr.endsWith('Z') || timestampStr.includes('+') || timestampStr.includes('-', 10)
+                        ? timestampStr 
+                        : timestampStr + 'Z';
+                    time = new Date(normalizedTimestamp);
+                    if (isNaN(time.getTime())) {
+                        time = new Date();
+                    }
+                } else {
+                    time = new Date();
+                }
+                
+                const timeStr = time.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit',
+                    hour12: true
+                });
+                const dateStr = time.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                
+                let eventType = 'modify';
+                if (alert.alert_type === 'deleted') eventType = 'delete';
+                else if (alert.alert_type === 'missing') eventType = 'delete';
+                else if (alert.alert_type === 'created') eventType = 'create';
+                else if (alert.alert_type === 'hash_mismatch' || alert.alert_type === 'modified') eventType = 'modify';
+                
+                let severity = 'low';
+                if (alert.alert_type === 'deleted' || alert.alert_type === 'missing') severity = 'critical';
+                else if (alert.alert_type === 'created') severity = 'medium';
+                else if (alert.alert_type === 'hash_mismatch' || alert.alert_type === 'modified') severity = 'high';
+                
+                const clientInfo = alert.client_hostname || alert.client_id_str || 'N/A';
+                const filePath = alert.path || 'N/A';
+                const initialHash = alert.initial_hash ? alert.initial_hash.substring(0, 16) + '...' : 'N/A';
+                const currentHash = alert.current_hash ? alert.current_hash.substring(0, 16) + '...' : 'N/A';
+
+                return `
+                    <tr>
+                        <td>
+                            <div style="font-weight: 600;">${timeStr}</div>
+                            <div style="font-size: 11px; color: var(--text-secondary);">${dateStr}</div>
+                        </td>
+                        <td><code style="font-size: 11px;">${escapeHtml(clientInfo)}</code></td>
+                        <td><code style="font-size: 12px; color: var(--text-primary);">${escapeHtml(filePath)}</code></td>
+                        <td><span class="event-badge ${eventType}">${eventType}</span></td>
+                        <td><code style="font-size: 11px; color: var(--text-secondary);">${escapeHtml(initialHash)}</code></td>
+                        <td><code style="font-size: 11px; color: var(--text-secondary);">${escapeHtml(currentHash)}</code></td>
+                        <td><span class="severity-badge ${severity}">${severity}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterAlertsPage() {
+            const typeFilter = document.getElementById('alert-filter-type').value;
+            const severityFilter = document.getElementById('alert-filter-severity').value;
+            
+            fetch('/api/alerts')
+                .then(res => res.json())
+                .then(alerts => {
+                    let filtered = alerts;
+                    
+                    if (typeFilter !== 'all') {
+                        filtered = filtered.filter(alert => {
+                            if (typeFilter === 'modified') {
+                                return alert.alert_type === 'hash_mismatch' || alert.alert_type === 'modified';
+                            } else if (typeFilter === 'created') {
+                                return alert.alert_type === 'created';
+                            } else if (typeFilter === 'deleted') {
+                                return alert.alert_type === 'deleted' || alert.alert_type === 'missing';
+                            }
+                            return true;
+                        });
+                    }
+                    
+                    if (severityFilter !== 'all') {
+                        filtered = filtered.filter(alert => {
+                            let severity = 'low';
+                            if (alert.alert_type === 'deleted' || alert.alert_type === 'missing') severity = 'critical';
+                            else if (alert.alert_type === 'created') severity = 'medium';
+                            else if (alert.alert_type === 'hash_mismatch' || alert.alert_type === 'modified') severity = 'high';
+                            return severity === severityFilter;
+                        });
+                    }
+                    
+                    renderAlertsPage(filtered);
+                })
+                .catch(err => {
+                    console.error('Error filtering alerts:', err);
+                });
+        }
+
+        function loadTimelinePage() {
+            fetch('/api/alerts')
+                .then(res => res.json())
+                .then(alerts => {
+                    filterTimelinePage(alerts);
+                })
+                .catch(err => {
+                    console.error('Error loading timeline:', err);
+                });
+        }
+
+        function filterTimelinePage(alerts = null) {
+            if (!alerts) {
+                fetch('/api/alerts')
+                    .then(res => res.json())
+                    .then(data => filterTimelinePage(data))
+                    .catch(err => console.error('Error loading timeline:', err));
+                return;
+            }
+
+            const typeFilter = document.getElementById('timeline-filter-type')?.value || 'all';
+            const limit = parseInt(document.getElementById('timeline-limit')?.value || 50);
+            
+            let filtered = alerts;
+            
+            if (typeFilter !== 'all') {
+                filtered = filtered.filter(alert => {
+                    if (typeFilter === 'modified') {
+                        return alert.alert_type === 'hash_mismatch' || alert.alert_type === 'modified';
+                    } else if (typeFilter === 'created') {
+                        return alert.alert_type === 'created';
+                    } else if (typeFilter === 'deleted') {
+                        return alert.alert_type === 'deleted' || alert.alert_type === 'missing';
+                    }
+                    return true;
+                });
+            }
+            
+            renderTimelinePage(filtered.slice(0, limit));
+        }
+
+        function renderTimelinePage(alerts) {
+            const container = document.getElementById('timeline-page-content');
+            if (!container) return;
+
+            if (alerts.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: var(--text-tertiary); padding: 40px;">No events in timeline</div>';
+                return;
+            }
+
+            alerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            const html = alerts.map((alert, index) => {
+                let time;
+                if (alert.timestamp) {
+                    const timestampStr = alert.timestamp;
+                    const normalizedTimestamp = timestampStr.endsWith('Z') || timestampStr.includes('+') || timestampStr.includes('-', 10)
+                        ? timestampStr 
+                        : timestampStr + 'Z';
+                    time = new Date(normalizedTimestamp);
+                    if (isNaN(time.getTime())) {
+                        time = new Date();
+                    }
+                } else {
+                    time = new Date();
+                }
+
+                const timeStr = time.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+
+                let eventType = 'modify';
+                let icon = 'fa-file-alt';
+                let title = 'File Modified';
+                let desc = 'Hash mismatch detected';
+                let tagColor = 'var(--warning)';
+
+                if (alert.alert_type === 'deleted' || alert.alert_type === 'missing') {
+                    eventType = 'delete';
+                    icon = 'fa-trash';
+                    title = 'File Deleted';
+                    desc = 'File removed or missing';
+                    tagColor = 'var(--error)';
+                } else if (alert.alert_type === 'created') {
+                    eventType = 'create';
+                    icon = 'fa-plus-circle';
+                    title = 'File Created';
+                    desc = 'New file detected';
+                    tagColor = 'var(--success)';
+                } else if (alert.alert_type === 'hash_mismatch' || alert.alert_type === 'modified') {
+                    eventType = 'modify';
+                    icon = 'fa-edit';
+                    title = 'File Modified';
+                    desc = 'Hash mismatch detected';
+                    tagColor = 'var(--warning)';
+                }
+
+                const fileName = alert.path ? alert.path.split('/').pop() || alert.path.split('\\').pop() : 'Unknown';
+                const clientInfo = alert.client_hostname ? ` (${alert.client_hostname})` : '';
+                const fullPath = alert.path || 'N/A';
+
+                const isLast = index === alerts.length - 1;
+                return `
+                    <div class="timeline-item" style="padding-bottom: ${isLast ? '0' : '12px'};">
+                        <div class="timeline-icon" style="background: ${tagColor}20; color: ${tagColor};">
+                            <i class="fas ${icon}"></i>
+                        </div>
+                        <div class="timeline-content" style="flex: 1; display: flex; flex-direction: column;">
+                            <div class="timeline-time">${timeStr}</div>
+                            <div class="timeline-title">${title}${clientInfo}</div>
+                            <div class="timeline-desc" style="margin-bottom: 6px;">${desc}</div>
+                            <span class="timeline-tag" style="background: ${tagColor}15; color: ${tagColor}; border-color: ${tagColor}30; align-self: flex-start; margin-bottom: 0;">${escapeHtml(fileName)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = html;
+        }
+
+        let chartRefreshInterval = null;
+
+        function showAgentStatus() {
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(page => page.classList.remove('active'));
+            // Show agent status page
+            document.getElementById('agent-status-page').classList.add('active');
+            // Load and render charts
+            loadAgentStatusCharts();
+            // Refresh charts every 30 seconds
+            if (chartRefreshInterval) {
+                clearInterval(chartRefreshInterval);
+            }
+            chartRefreshInterval = setInterval(loadAgentStatusCharts, 30000);
+        }
+
+        // Chart instances
+        let systemActivityChart = null;
+        let eventDistributionChart = null;
+
+        function loadAgentStatusCharts() {
+            // Load chart data from API
+            fetch('/admin/api/charts/activity')
+                .then(res => res.json())
+                .then(data => {
+                    renderSystemActivityChart(data);
+                })
+                .catch(err => {
+                    console.error('Error loading activity chart:', err);
+                });
+
+            fetch('/admin/api/charts/distribution')
+                .then(res => res.json())
+                .then(data => {
+                    renderEventDistributionChart(data);
+                })
+                .catch(err => {
+                    console.error('Error loading distribution chart:', err);
+                });
+        }
+
+        function renderSystemActivityChart(data) {
+            const ctx = document.getElementById('systemActivityChart');
+            if (!ctx) return;
+
+            // Destroy existing chart if it exists
+            if (systemActivityChart) {
+                systemActivityChart.destroy();
+            }
+
+            const labels = data.labels || [];
+            const eventsData = data.events || [];
+            const cpuData = data.cpu || [];
+
+            // Neon colors
+            const neonGreen = '#00ff88';
+            const neonBlue = '#00a8ff';
+            const neonPurple = '#8b5cf6';
+            const neonPink = '#ff00ff';
+
+            systemActivityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Events',
+                            data: eventsData,
+                            borderColor: neonGreen,
+                            backgroundColor: 'rgba(0, 255, 136, 0.15)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.5,
+                            pointRadius: 0,
+                            pointHoverRadius: 8,
+                            pointHoverBorderWidth: 3,
+                            pointHoverBackgroundColor: neonGreen,
+                            pointHoverBorderColor: '#ffffff',
+                            shadowOffsetX: 0,
+                            shadowOffsetY: 0,
+                            shadowBlur: 20,
+                            shadowColor: 'rgba(0, 255, 136, 0.5)'
+                        },
+                        {
+                            label: 'CPU',
+                            data: cpuData,
+                            borderColor: neonBlue,
+                            backgroundColor: 'rgba(0, 168, 255, 0.15)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.5,
+                            pointRadius: 0,
+                            pointHoverRadius: 8,
+                            pointHoverBorderWidth: 3,
+                            pointHoverBackgroundColor: neonBlue,
+                            pointHoverBorderColor: '#ffffff',
+                            shadowOffsetX: 0,
+                            shadowOffsetY: 0,
+                            shadowBlur: 20,
+                            shadowColor: 'rgba(0, 168, 255, 0.5)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15,
+                                font: {
+                                    size: 12,
+                                    weight: '600'
+                                },
+                                color: 'rgba(255, 255, 255, 0.9)',
+                                generateLabels: function(chart) {
+                                    const original = Chart.defaults.plugins.legend.labels.generateLabels;
+                                    const labels = original.call(this, chart);
+                                    labels.forEach(label => {
+                                        if (label.text === 'Events') {
+                                            label.fillStyle = neonGreen;
+                                        } else if (label.text === 'CPU') {
+                                            label.fillStyle = neonBlue;
+                                        }
+                                    });
+                                    return labels;
+                                }
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: neonBlue,
+                            borderWidth: 2,
+                            padding: 12,
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            boxPadding: 6,
+                            displayColors: true,
+                            callbacks: {
+                                labelColor: function(context) {
+                                    return {
+                                        borderColor: context.dataset.borderColor,
+                                        backgroundColor: context.dataset.borderColor
+                                    };
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 80,
+                            ticks: {
+                                stepSize: 20,
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                font: {
+                                    size: 11,
+                                    weight: '600'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(59, 130, 246, 0.2)',
+                                lineWidth: 1,
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                font: {
+                                    size: 11,
+                                    weight: '600'
+                                }
+                            },
+                            grid: {
+                                display: false,
+                                drawBorder: false
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        function renderEventDistributionChart(data) {
+            const ctx = document.getElementById('eventDistributionChart');
+            if (!ctx) return;
+
+            // Destroy existing chart if it exists
+            if (eventDistributionChart) {
+                eventDistributionChart.destroy();
+            }
+
+            const labels = data.labels || [];
+            const values = data.values || [];
+            
+            // Neon color palette
+            const neonColors = {
+                'Modified': '#00ff88',    // Neon Green
+                'Accessed': '#ffaa00',    // Neon Orange
+                'Created': '#00a8ff',     // Neon Blue
+                'Deleted': '#ff0066'       // Neon Pink/Red
+            };
+            
+            // Map labels to neon colors
+            const colors = labels.map(label => {
+                return neonColors[label] || '#8b5cf6'; // Default to purple
+            });
+
+            eventDistributionChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors,
+                        borderWidth: 3,
+                        borderColor: '#000000',
+                        hoverBorderWidth: 5,
+                        hoverBorderColor: '#ffffff',
+                        shadowOffsetX: 0,
+                        shadowOffsetY: 0,
+                        shadowBlur: 15,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#ffffff',
+                            borderWidth: 2,
+                            padding: 12,
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            boxPadding: 6,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${percentage}% (${value} events)`;
+                                },
+                                labelColor: function(context) {
+                                    return {
+                                        borderColor: context.dataset.backgroundColor[context.dataIndex],
+                                        backgroundColor: context.dataset.backgroundColor[context.dataIndex]
+                                    };
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Render custom neon legend
+            const legendContainer = document.getElementById('event-distribution-legend');
+            if (legendContainer) {
+                const total = values.reduce((a, b) => a + b, 0);
+                legendContainer.innerHTML = labels.map((label, index) => {
+                    const value = values[index];
+                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                    const color = colors[index];
+                    return `
+                        <div class="neon-legend-item" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span class="neon-legend-dot" style="width: 16px; height: 16px; border-radius: 50%; background: ${color}; display: inline-block; box-shadow: 0 0 10px ${color}, 0 0 20px ${color}; animation: neonPulse 2s ease-in-out infinite;"></span>
+                                <span style="font-weight: 600; color: rgba(255, 255, 255, 0.9); font-size: 13px;">${label}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <span style="color: rgba(255, 255, 255, 0.6); font-size: 12px; font-weight: 500;">${percentage}%</span>
+                                <span style="font-weight: 700; color: ${color}; text-shadow: 0 0 10px ${color}; font-size: 14px;">${value} events</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function showProfile() {
+            document.getElementById('profile-modal').classList.add('active');
+        }
+
+        function navigateToDashboard() {
+            window.location.href = '{{ url_for("admin.admin_panel") }}';
+        }
+
+        function navigateToLogout() {
+            window.location.href = '{{ url_for("auth.logout") }}';
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profile-modal').classList.remove('active');
+        }
+
+        function loadClients() {
+            fetch('/admin/api/clients')
+                .then(res => res.json())
+                .then(clients => {
+                    allClients = clients; // Store for search
+                    // Update stats with current alerts data
+                    updateStats(clients, allAlerts);
+                    const searchTerm = document.getElementById('search-input').value;
+                    renderClients(clients, searchTerm);
+                })
+                .catch(err => {
+                    console.error('Error loading clients:', err);
+                    document.getElementById('clients-tbody').innerHTML = 
+                        '<tr><td colspan="9" style="text-align: center; color: #c33;">Error loading clients</td></tr>';
+                });
+        }
+
+        function updateStats(clients, alerts = []) {
+            let totalHashes = 0;
+            let totalFolders = 0;
+            let totalAlerts = 0;
+            let modified = 0, deleted = 0, created = 0, accessed = 0;
+
+            clients.forEach(client => {
+                totalHashes += client.hash_count || 0;
+                totalFolders += client.monitored_folders_count || 0;
+                totalAlerts += client.alerts_count || 0;
+            });
+
+            // Count alert types from actual alerts data
+            alerts.forEach(alert => {
+                const alertType = alert.alert_type;
+                if (alertType === 'deleted' || alertType === 'missing') {
+                    deleted++;
+                } else if (alertType === 'created') {
+                    created++;
+                } else if (alertType === 'hash_mismatch' || alertType === 'modified') {
+                    modified++;
+                } else {
+                    // Other types count as accessed
+                    accessed++;
+                }
+            });
+
+            // Update summary cards
+            document.getElementById('total-modified').textContent = modified;
+            document.getElementById('total-deleted').textContent = deleted;
+            document.getElementById('total-created').textContent = created;
+            document.getElementById('total-accessed').textContent = accessed;
+        }
+
+        function renderClients(clients, searchTerm = '') {
+            const tbody = document.getElementById('clients-tbody');
+            
+            if (clients.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="no-results">' + 
+                    (searchTerm ? `No clients found matching "${searchTerm}"` : 'No clients found') + 
+                    '</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = clients.map((client, index) => {
+                // Parse timestamps correctly with timezone handling
+                const parseTimestamp = (ts) => {
+                    if (!ts) return new Date();
+                    // Normalize ISO timestamp (assume UTC if no timezone)
+                    const normalized = ts.endsWith('Z') || ts.includes('+') || ts.includes('-', 10)
+                        ? ts 
+                        : ts + 'Z';
+                    const date = new Date(normalized);
+                    return isNaN(date.getTime()) ? new Date() : date;
+                };
+                
+                const firstSeenDate = parseTimestamp(client.first_seen);
+                const lastSeenDate = parseTimestamp(client.last_seen);
+                
+                // Format dates in user's local timezone
+                const firstSeen = firstSeenDate.toLocaleString('en-US', { 
+                    month: '2-digit', 
+                    day: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                });
+                const lastSeen = lastSeenDate.toLocaleString('en-US', { 
+                    month: '2-digit', 
+                    day: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                });
+                const clientIdShort = client.client_id.substring(0, 8) + '...';
+                const hostname = client.hostname || 'N/A';
+                const highlightedHostname = searchTerm ? highlightText(hostname, searchTerm) : hostname;
+                const highlightedClientId = searchTerm ? highlightText(clientIdShort, searchTerm) : clientIdShort;
+                
+                return `
+                    <tr>
+                        <td>${client.id}</td>
+                        <td><code style="font-size: 11px;">${highlightedClientId}</code></td>
+                        <td>${highlightedHostname}</td>
+                        <td>${firstSeen}</td>
+                        <td>${lastSeen}</td>
+                        <td>${client.hash_count || 0}</td>
+                        <td>${client.monitored_folders_count || 0}</td>
+                        <td>${client.alerts_count || 0}</td>
+                        <td>
+                            <button class="action-btn" onclick="viewClient(${client.id}, '${hostname}', '${clientIdShort}')" style="padding: 6px 12px; font-size: 12px;">
+                                View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function loadAlerts() {
+            fetch('/api/alerts')
+                .then(res => res.json())
+                .then(alerts => {
+                    allAlerts = alerts; // Store for search
+                    const searchTerm = document.getElementById('search-input').value;
+                    renderAlertsTable(alerts, searchTerm);
+                    // Update timeline with alerts
+                    renderTimeline(alerts.slice(0, 20)); // Show latest 20 events
+                    // Update stats with new alerts data
+                    if (allClients.length > 0) {
+                        updateStats(allClients, alerts);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error loading alerts:', err);
+                });
+        }
+
+        function renderTimeline(alerts) {
+            const timelineContainer = document.getElementById('timeline-content');
+            if (!timelineContainer) return;
+
+            if (alerts.length === 0) {
+                timelineContainer.innerHTML = '<div style="text-align: center; color: var(--text-tertiary); padding: 40px;">No events in timeline</div>';
+                return;
+            }
+
+            // Sort by timestamp (newest first)
+            alerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            timelineContainer.innerHTML = alerts.map(alert => {
+                // Parse timestamp
+                let time;
+                if (alert.timestamp) {
+                    const timestampStr = alert.timestamp;
+                    const normalizedTimestamp = timestampStr.endsWith('Z') || timestampStr.includes('+') || timestampStr.includes('-', 10)
+                        ? timestampStr 
+                        : timestampStr + 'Z';
+                    const date = new Date(normalizedTimestamp);
+                    if (isNaN(date.getTime())) {
+                        time = 'N/A';
+                    } else {
+                        time = date.toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                        });
+                    }
+                } else {
+                    time = 'N/A';
+                }
+
+                // Determine event type and icon
+                let eventType = 'modify';
+                let icon = 'fa-file-alt';
+                let title = 'File Modified';
+                let desc = 'Hash mismatch detected';
+                let tagColor = 'var(--warning)';
+
+                if (alert.alert_type === 'deleted' || alert.alert_type === 'missing') {
+                    eventType = 'delete';
+                    icon = 'fa-trash';
+                    title = 'File Deleted';
+                    desc = 'File removed or missing';
+                    tagColor = 'var(--error)';
+                } else if (alert.alert_type === 'created') {
+                    eventType = 'create';
+                    icon = 'fa-plus-circle';
+                    title = 'File Created';
+                    desc = 'New file detected';
+                    tagColor = 'var(--success)';
+                } else if (alert.alert_type === 'hash_mismatch' || alert.alert_type === 'modified') {
+                    eventType = 'modify';
+                    icon = 'fa-edit';
+                    title = 'File Modified';
+                    desc = 'Hash mismatch detected';
+                    tagColor = 'var(--warning)';
+                }
+
+                // Get filename from path
+                const fileName = alert.path ? alert.path.split('/').pop() || alert.path.split('\\').pop() : 'Unknown';
+                const clientInfo = alert.client_hostname ? ` (${alert.client_hostname})` : '';
+
+                return `
+                    <div class="timeline-item">
+                        <div class="timeline-icon" style="background: ${tagColor}20; color: ${tagColor};">
+                            <i class="fas ${icon}"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-time">${time}</div>
+                            <div class="timeline-title">${title}${clientInfo}</div>
+                            <div class="timeline-desc">${desc}</div>
+                            <span class="timeline-tag" style="background: ${tagColor}15; color: ${tagColor}; border-color: ${tagColor}30;">${escapeHtml(fileName)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderAlertsTable(alerts, searchTerm = '') {
+            const tbody = document.getElementById('alerts-tbody');
+            
+            if (alerts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="no-results">' + 
+                    (searchTerm ? `No alerts found matching "${searchTerm}"` : 'No alerts') + 
+                    '</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = alerts.slice(0, 10).map(alert => {
+                // Parse timestamp correctly (handle ISO format with Z or timezone)
+                let time;
+                if (alert.timestamp) {
+                    // Parse ISO timestamp string (assumes UTC if no timezone specified)
+                    const timestampStr = alert.timestamp;
+                    // If timestamp doesn't end with Z or timezone, assume UTC
+                    const normalizedTimestamp = timestampStr.endsWith('Z') || timestampStr.includes('+') || timestampStr.includes('-', 10)
+                        ? timestampStr 
+                        : timestampStr + 'Z';
+                    time = new Date(normalizedTimestamp);
+                    // Validate the date
+                    if (isNaN(time.getTime())) {
+                        time = new Date(); // Fallback to current time if invalid
+                    }
+                } else {
+                    time = new Date(); // Fallback to current time
+                }
+                
+                // Format time in user's local timezone
+                const timeStr = time.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit',
+                    hour12: true
+                });
+                const dateStr = time.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                
+                let eventType = 'modify';
+                if (alert.alert_type === 'deleted') eventType = 'delete';
+                else if (alert.alert_type === 'missing') eventType = 'delete';  // Missing files shown as delete
+                else if (alert.alert_type === 'created') eventType = 'create';
+                else if (alert.alert_type === 'hash_mismatch' || alert.alert_type === 'modified') eventType = 'modify';
+                
+                let severity = 'low';
+                if (alert.alert_type === 'deleted' || alert.alert_type === 'missing') severity = 'critical';
+                else if (alert.alert_type === 'created') severity = 'medium';
+                else if (alert.alert_type === 'hash_mismatch' || alert.alert_type === 'modified') severity = 'high';
+                
+                const hashChange = alert.initial_hash && alert.current_hash 
+                    ? `${alert.initial_hash.substring(0, 8)} → ${alert.current_hash.substring(0, 8)}`
+                    : alert.initial_hash ? `${alert.initial_hash.substring(0, 8)} → —` : `— → ${alert.current_hash?.substring(0, 8) || '—'}`;
+                
+                const fileName = alert.path.split('/').pop() || alert.path;
+                const highlightedFileName = searchTerm ? highlightText(fileName, searchTerm) : fileName;
+                const highlightedPath = searchTerm ? highlightText(alert.path, searchTerm) : alert.path;
+                
+                const agentName = alert.client_hostname || 'Unknown';
+                
+                return `
+                    <tr>
+                        <td>${timeStr} ${dateStr}</td>
+                        <td><span style="font-weight: 500; color: var(--accent);">${agentName}</span></td>
+                        <td>${highlightedFileName}</td>
+                        <td><span class="event-badge ${eventType}">${eventType}</span></td>
+                        <td><code style="font-size: 11px;">${hashChange}</code></td>
+                        <td><span class="severity-badge ${severity}">${severity.toUpperCase()}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function viewClient(clientId, hostname, clientIdShort) {
+            currentClientId = clientId;
+            document.getElementById('modal-title').textContent = `Client: ${hostname} (${clientIdShort})`;
+            document.getElementById('client-modal').classList.add('active');
+            switchTab('hashes');
+        }
+
+        function closeModal() {
+            document.getElementById('client-modal').classList.remove('active');
+            currentClientId = null;
+        }
+
+        function switchTab(tabName, evt = null) {
+            currentTab = tabName;
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            if (evt && evt.target) {
+                evt.target.classList.add('active');
+            } else {
+                // If called programmatically, find the button by text
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    const btnText = btn.textContent.trim().toLowerCase();
+                    if (btnText === tabName.toLowerCase() || 
+                        (tabName === 'stats' && btnText === 'statistics')) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+            
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            if (currentClientId) {
+                loadClientData(tabName);
+            }
+        }
+
+        function loadClientData(tabName) {
+            if (!currentClientId) return;
+            
+            const endpoints = {
+                'hashes': `/admin/api/client/${currentClientId}/hashes`,
+                'folders': `/admin/api/client/${currentClientId}/folders`,
+                'alerts': `/admin/api/client/${currentClientId}/alerts`,
+                'stats': `/admin/api/client/${currentClientId}/stats`
+            };
+            
+            fetch(endpoints[tabName])
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (tabName === 'hashes') renderHashes(data);
+                    else if (tabName === 'folders') renderFolders(data);
+                    else if (tabName === 'alerts') renderAlerts(data);
+                    else if (tabName === 'stats') renderStats(data);
+                })
+                .catch(err => {
+                    console.error(`Error loading ${tabName}:`, err);
+                    document.getElementById(tabName + '-content').innerHTML = 
+                        `<p style="color: var(--error); padding: 20px; text-align: center;">
+                            <i class="fas fa-exclamation-circle"></i><br>
+                            Error loading data<br>
+                            <small style="color: var(--text-secondary);">${err.message}</small>
+                        </p>`;
+                });
+        }
+
+        function renderHashes(data) {
+            const content = document.getElementById('hashes-content');
+            
+            // Check if data structure is correct
+            if (!data || !data.hashes) {
+                content.innerHTML = '<p style="color: var(--error); padding: 20px; text-align: center;">Invalid data format received</p>';
+                return;
+            }
+            
+            if (data.count === 0 || data.hashes.length === 0) {
+                content.innerHTML = '<p style="color: var(--text-tertiary); padding: 20px; text-align: center;">No hashes found for this client</p>';
+                return;
+            }
+            
+            content.innerHTML = `
+                <p style="margin-bottom: 15px; color: var(--text-secondary);">Total: ${data.count} hash(es)</p>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Path</th>
+                            <th>Hash</th>
+                            <th>Size</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.hashes.map(h => `
+                            <tr>
+                                <td>${h.path || 'N/A'}</td>
+                                <td><code style="font-size: 11px;">${h.hash_md5 || 'N/A'}</code></td>
+                                <td>${formatSize(h.file_size)}</td>
+                                <td>${h.timestamp ? new Date(h.timestamp).toLocaleString('en-US') : 'N/A'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderFolders(data) {
+            const content = document.getElementById('folders-content');
+            
+            if (!data || !data.folders) {
+                content.innerHTML = '<p style="color: var(--error); padding: 20px; text-align: center;">Invalid data format received</p>';
+                return;
+            }
+            
+            if (data.count === 0 || data.folders.length === 0) {
+                content.innerHTML = '<p style="color: var(--text-tertiary); padding: 20px; text-align: center;">No monitored folders found for this client</p>';
+                return;
+            }
+            
+            content.innerHTML = `
+                <p style="margin-bottom: 15px; color: var(--text-secondary);">Total: ${data.count} folder(s)</p>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Folder Path</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Last Scan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.folders.map(f => `
+                            <tr>
+                                <td>${f.folder_path || 'N/A'}</td>
+                                <td><span class="event-badge ${f.is_active ? 'create' : 'delete'}">${f.is_active ? 'Active' : 'Inactive'}</span></td>
+                                <td>${f.created_at ? new Date(f.created_at).toLocaleString('en-US') : 'N/A'}</td>
+                                <td>${f.last_scan ? new Date(f.last_scan).toLocaleString('en-US') : 'Never'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderAlerts(data) {
+            const content = document.getElementById('alerts-content');
+            
+            if (!data || !data.alerts) {
+                content.innerHTML = '<p style="color: var(--error); padding: 20px; text-align: center;">Invalid data format received</p>';
+                return;
+            }
+            
+            if (data.count === 0 || data.alerts.length === 0) {
+                content.innerHTML = '<p style="color: var(--text-tertiary); padding: 20px; text-align: center;">No alerts found for this client</p>';
+                return;
+            }
+            
+            content.innerHTML = `
+                <p style="margin-bottom: 15px; color: var(--text-secondary);">Total: ${data.count} alert(s)</p>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Path</th>
+                            <th>Type</th>
+                            <th>Initial Hash</th>
+                            <th>Current Hash</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.alerts.map(a => `
+                            <tr>
+                                <td>${a.path || 'N/A'}</td>
+                                <td><span class="event-badge ${a.alert_type || 'modify'}">${a.alert_type || 'unknown'}</span></td>
+                                <td><code style="font-size: 11px;">${a.initial_hash || '—'}</code></td>
+                                <td><code style="font-size: 11px;">${a.current_hash || '—'}</code></td>
+                                <td>${a.timestamp ? new Date(a.timestamp).toLocaleString('en-US') : 'N/A'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderStats(data) {
+            const content = document.getElementById('stats-content');
+            
+            if (!data || !data.stats) {
+                content.innerHTML = '<p style="color: var(--error); padding: 20px; text-align: center;">Invalid data format received</p>';
+                return;
+            }
+            
+            const stats = data.stats;
+            content.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                    <div class="summary-card">
+                        <div class="summary-dot blue"></div>
+                        <div class="summary-content">
+                            <h3>${stats.total_hashes || 0}</h3>
+                            <p>Total Hashes</p>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-dot green"></div>
+                        <div class="summary-content">
+                            <h3>${stats.total_monitored_folders || 0}</h3>
+                            <p>Monitored Folders</p>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-dot red"></div>
+                        <div class="summary-content">
+                            <h3>${stats.total_alerts || 0}</h3>
+                            <p>Total Alerts</p>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-dot orange"></div>
+                        <div class="summary-content">
+                            <h3>${stats.active_monitored_folders || 0}</h3>
+                            <p>Active Folders</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatSize(bytes) {
+            if (!bytes) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        document.getElementById('client-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'client-modal') {
+                closeModal();
+            }
+        });
+
+        document.getElementById('profile-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'profile-modal') {
+                closeProfileModal();
+            }
+        });
+
+        // Check sidebar state on load
+        window.addEventListener('resize', () => {
+            if (window.innerWidth <= 768) {
+                sidebarCollapsed = true;
+                toggleSidebar();
+            }
+        });
+        function downloadTableAsJSON() {
+            // Determine which table is currently visible/active
+            const activePage = document.querySelector('.page-content.active');
+            let dataToExport = null;
+            let filename = 'fimonacci-export.json';
+
+            if (!activePage) {
+                alert('No active page found');
+                return;
+            }
+
+            // Check if we're on dashboard page
+            if (activePage.id === 'dashboard-page') {
+                // Export alerts table data
+                if (allAlerts && allAlerts.length > 0) {
+                    dataToExport = {
+                        type: 'alerts',
+                        timestamp: new Date().toISOString(),
+                        count: allAlerts.length,
+                        data: allAlerts
+                    };
+                    filename = `fimonacci-alerts-${new Date().toISOString().split('T')[0]}.json`;
+                } else {
+                    alert('No alerts data available to export');
+                    return;
+                }
+            } 
+            // Check if we're on clients view (dashboard also has clients table)
+            else if (allClients && allClients.length > 0) {
+                dataToExport = {
+                    type: 'clients',
+                    timestamp: new Date().toISOString(),
+                    count: allClients.length,
+                    data: allClients
+                };
+                filename = `fimonacci-clients-${new Date().toISOString().split('T')[0]}.json`;
+            }
+            // Check if we're on logs page
+            else if (activePage.id === 'logs-page' && allLogs && allLogs.length > 0) {
+                dataToExport = {
+                    type: 'logs',
+                    timestamp: new Date().toISOString(),
+                    count: allLogs.length,
+                    data: allLogs
+                };
+                filename = `fimonacci-logs-${new Date().toISOString().split('T')[0]}.json`;
+            }
+            // Default: try to export alerts or clients
+            else {
+                if (allAlerts && allAlerts.length > 0) {
+                    dataToExport = {
+                        type: 'alerts',
+                        timestamp: new Date().toISOString(),
+                        count: allAlerts.length,
+                        data: allAlerts
+                    };
+                    filename = `fimonacci-alerts-${new Date().toISOString().split('T')[0]}.json`;
+                } else if (allClients && allClients.length > 0) {
+                    dataToExport = {
+                        type: 'clients',
+                        timestamp: new Date().toISOString(),
+                        count: allClients.length,
+                        data: allClients
+                    };
+                    filename = `fimonacci-clients-${new Date().toISOString().split('T')[0]}.json`;
+                } else {
+                    alert('No data available to export');
+                    return;
+                }
+            }
+
+            if (dataToExport) {
+                // Convert to JSON string with pretty formatting
+                const jsonString = JSON.stringify(dataToExport, null, 2);
+                
+                // Create blob and download
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+        }
+    </script>
+</body>
+</html>

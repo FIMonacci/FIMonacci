@@ -1,0 +1,11 @@
+Flask
+Flask-SQLAlchemy
+Flask-SocketIO
+Flask-Login
+Flask-WTF
+WTForms
+watchdog
+werkzeug
+psycopg2-binary
+requests
+urllib3
