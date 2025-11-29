@@ -82,7 +82,7 @@ def create_app():
     app.register_blueprint(admin_bp)
 
     # Initialize database - wrap in try/except for Vercel compatibility
-    try:
+    try:    
         with app.app_context():
             try:
                 db.create_all()
