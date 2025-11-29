@@ -9,3 +9,4 @@ werkzeug
 psycopg2-binary
 requests
 urllib3
+python-telegram-bot[job-queue]>=20.0

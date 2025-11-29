@@ -119,6 +119,31 @@ def _record_alert(filepath, baseline_hash, current_hash, event_type, client_id=N
     except Exception as e:
         # SocketIO may not be available (e.g., on Vercel)
         pass
+    
+    # Send alert to Telegram
+    try:
+        from .telegram_bot import send_alert
+        from .database import Client as DBClient # Avoid name collision with local Client
+        client_hostname = None
+        if client_id:
+            with db.session.no_autoflush: # Prevent autoflush issues
+                db_client = DBClient.query.filter_by(id=client_id).first()
+                if db_client:
+                    client_hostname = db_client.hostname
+        
+        send_alert(
+            filepath=normalized_path,
+            alert_type=event_type,
+            client_id=client_id,
+            initial_hash=baseline_hash,
+            current_hash=current_hash,
+            client_hostname=client_hostname
+        )
+    except Exception as e:
+        # Telegram bot may not be configured or not running
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Telegram alert not sent (may be expected): {e}")
 
 
 class FIMHandler(FileSystemEventHandler):

@@ -1,0 +1,11 @@
+# Telegram Bot Dependencies
+python-telegram-bot[job-queue]>=20.0
+
+# Main project dependencies (imported from parent)
+# These should be installed in the main project
+# Flask
+# Flask-SQLAlchemy
+# Flask-Login
+# werkzeug
+# psycopg2-binary
+
