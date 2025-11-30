@@ -1,6 +1,10 @@
 # FIMonacci
 
 High-speed File Integrity Monitoring (FIM) system with real-time alerts, built with Flask, MD5 hashing, and WebSocket support.
+## Credentials
+- admin: infat
+- password: salam123
+- url: https://fimonacci.vercel.app
 
 ## 🚀 Features
 
